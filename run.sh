@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
-TARGET=${1:-/usr/local/bin}
+TARGET=${1:-/tmp/local/bin}
 cp mount.cifs "$TARGET"
