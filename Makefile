@@ -8,4 +8,6 @@ container:
 
 push: container
 	docker tag $(IMAGE) $(IMAGE):$(VERSION)
+	docker tag $(IMAGE) $(IMAGE):latest
 	docker push $(IMAGE):$(VERSION)
+	docker push $(IMAGE):latest
