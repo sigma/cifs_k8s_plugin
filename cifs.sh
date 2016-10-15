@@ -58,76 +58,77 @@ detach() {
 }
 
 domount() {
-	MNTPATH=$1
-	DMDEV=$2
-	VOLUME_SRC=$(echo $3|"$JQ" -r '.source')
-        MOUNT_OPTIONS=$(echo $3|"$JQ" -r '.mountOptions // empty')
-	USERNAME=$(echo $3|"$JQ" -r '.["kubernetes.io/secret/username"] // empty'|base64 -d)
-	PASSWORD=$(echo $3|"$JQ" -r '.["kubernetes.io/secret/password"] // empty'|base64 -d)
+	MNTPATH="$1"
+	DMDEV="$2"
+	VOLUME_SRC=$(echo "$3"|"$JQ" -r '.source')
+        READ_MODE=$(echo "$3"|"$JQ" -r '.["kubernetes.io/readwrite"]')
+        MOUNT_OPTIONS=$(echo "$3"|"$JQ" -r '.mountOptions // empty')
+        USERNAME=$(echo "$3"|"$JQ" -r '.["kubernetes.io/secret/username"] // empty'|base64 -d)
+        PASSWORD=$(echo "$3"|"$JQ" -r '.["kubernetes.io/secret/password"] // empty'|base64 -d)
 
-        ALL_OPTIONS="user=${USERNAME},pass=${PASSWORD}"
+        ALL_OPTIONS="user=${USERNAME},pass=${PASSWORD},${READ_MODE}"
         if [ -n "$MOUNT_OPTIONS" ]; then
             ALL_OPTIONS="${ALL_OPTIONS},${MOUNT_OPTIONS}"
         fi
         
-	if ismounted ; then
-		log '{"status": "Success"}'
-		exit 0
-	fi
+        if ismounted ; then
+                log '{"status": "Success"}'
+                exit 0
+        fi
 
-	mkdir -p ${MNTPATH} &> /dev/null
+        mkdir -p ${MNTPATH} &> /dev/null
 
-	"$MOUNT_CIFS" -o "${ALL_OPTIONS}" "${VOLUME_SRC}" "${MNTPATH}" &> /dev/null
+        "$MOUNT_CIFS" -o "${ALL_OPTIONS}" "${VOLUME_SRC}" "${MNTPATH}" &> /dev/null
 
-	if [ $? -ne 0 ]; then
-		err '{ "status": "Failure", "message": "Failed to mount device '${DMDEV}' at '${MNTPATH}' , user: '${USERNAME}' , '${VOLUME_SRC}'"}'
-		exit 1
-	fi
-	log '{"status": "Success"}'
-	exit 0
+        if [ $? -ne 0 ]; then
+                err '{ "status": "Failure", "message": "Failed to mount device '${DMDEV}' at '${MNTPATH}' , user: '${USERNAME}' , '${VOLUME_SRC}'"}'
+                exit 1
+        fi
+        log '{"status": "Success"}'
+        exit 0
 }
 
 unmount() {
-	MNTPATH=$1
-	if ! ismounted ; then
-		log '{"status": "Success"}'
-		exit 0
-	fi
+        MNTPATH="$1"
+        if ! ismounted ; then
+                log '{"status": "Success"}'
+                exit 0
+        fi
 
-	umount ${MNTPATH} &> /dev/null
-	if [ $? -ne 0 ]; then
-		err '{ "status": "Failed", "message": "Failed to unmount volume at '${MNTPATH}'"}'
-		exit 1
-	fi
-	rmdir ${MNTPATH} &> /dev/null
+        umount "${MNTPATH}" &> /dev/null
+        if [ $? -ne 0 ]; then
+                err '{ "status": "Failed", "message": "Failed to unmount volume at '${MNTPATH}'"}'
+                exit 1
+        fi
+        rmdir "${MNTPATH}" &> /dev/null
 
-	log '{"status": "Success"}'
-	exit 0
+        log '{"status": "Success"}'
+        exit 0
 }
 
 op=$1
 
 if [ "$op" = "init" ]; then
-	log '{"status": "Success"}'
-	exit 0
+        log '{"status": "Success"}'
+        exit 0
 fi
 
 if [ $# -lt 2 ]; then
-	usage
+        usage
 fi
 
 shift
 
 case "$op" in
-	attach)
-		attach $*
-		;;
-	detach)
-		detach $*
-		;;
-	mount)
-		domount $*
-		;;
+        attach)
+                attach $*
+                ;;
+        detach)
+                detach $*
+                ;;
+        mount)
+                domount $*
+                ;;
 	unmount)
 		unmount $*
 		;;
