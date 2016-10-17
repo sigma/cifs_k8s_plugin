@@ -17,7 +17,7 @@ To build the runtime docker image, clone this project and then
 run the following command:
 
 ```bash
-$ ./build.sh
+$ make container
 ```
 
 ### References:
